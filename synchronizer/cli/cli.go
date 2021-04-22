@@ -5,6 +5,7 @@ import (
 	"github.com/schidstorm/ffmpeg-jobs/synchronizer/synchronizer"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"time"
 )
 
 func Run() {
@@ -15,6 +16,7 @@ func Run() {
 	rootCmd.PersistentFlags().String("inputFileDirectory", "/input", "Directory where to look for optimizations")
 	rootCmd.PersistentFlags().String("outputFileDirectory", "/output", "Directory where to put the optimizations")
 	rootCmd.PersistentFlags().String("apiServer", "http://localhost:8080", "Url of the API server")
+	rootCmd.PersistentFlags().Duration("watcherLoopWait", 5*time.Second, "Time to wait between file syncs")
 	rootCmd.PersistentFlags().String("logLevel", logrus.WarnLevel.String(), "Log level (debug, info, warn, error, fatal, panic")
 
 	err := rootCmd.Execute()
@@ -54,14 +56,20 @@ func parseConfig(cmd *cobra.Command) (*config.Config, error) {
 		return nil, err
 	}
 
-	apiServerUrl, err := cmd.PersistentFlags().GetString("apiServer")
+	apiServerUrl, err := cmd.PersistentFlags().GetString("apiServerUrl")
+	if err != nil {
+		return nil, err
+	}
+
+	watcherLoopWait, err := cmd.PersistentFlags().GetDuration("watcherLoopWait")
 	if err != nil {
 		return nil, err
 	}
 
 	return &config.Config{
-		InputFileDirectory: inputFileDirectory,
-		ApiServerUrl: apiServerUrl,
+		InputFileDirectory:  inputFileDirectory,
+		ApiServerUrl:        apiServerUrl,
 		OutputFileDirectory: outputFileDirectory,
+		WatcherLoopWait:     watcherLoopWait,
 	}, nil
 }

@@ -15,15 +15,24 @@ import (
 	"time"
 )
 
-func RunWatcher(config *config.Config, applicationContext context.Context) error  {
+func RunWatcher(config *config.Config, applicationContext context.Context) error {
 	for {
 		select {
 		case <-applicationContext.Done():
 			return nil
-		case <- time.After(1 * time.Second):
+		case <-time.After(config.WatcherLoopWait):
 		}
 
+		apiJobs := getApiJobs(config.ApiServerUrl)
+		fsFiles := scanDirectory(config.InputFileDirectory)
 
+		for _, fsFile := range fsFiles {
+			if _, ok := apiJobs[fsFile]; ok {
+				continue
+			}
+
+			addJobForFile(config.ApiServerUrl, config.OutputFileDirectory, fsFile)
+		}
 	}
 }
 
@@ -44,30 +53,43 @@ func scanDirectory(dirPath string) []string {
 	return filePaths
 }
 
-func apiFilesExist(apiServerUrl string, paths []string) []string {
-	resp, err := http.Get(fmt.Sprintf("%s/job"))
+func getApiJobs(apiServerUrl string) map[string]domain.Job {
+	resp, err := http.Get(fmt.Sprintf("%s/job", apiServerUrl))
 	if err != nil {
 		logrus.Error(err)
-		return []string{}
+		return map[string]domain.Job{}
 	}
 	defer resp.Body.Close()
 
 	responseJson, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		logrus.Error(err)
-		return []string{}
+		return map[string]domain.Job{}
 	}
 
-	var job domain.Job
+	var jobResults struct {
+		Data []domain.Job
+	}
 
+	err = json.Unmarshal(responseJson, &jobResults)
+	if err != nil {
+		logrus.Error(err)
+		return map[string]domain.Job{}
+	}
+
+	jobsMap := map[string]domain.Job{}
+	for _, apiJob := range jobResults.Data {
+		jobsMap[apiJob.InputFile] = apiJob
+	}
+	return jobsMap
 }
 
 func addJobForFile(apiServerUrl, outputDir, inputPath string) {
 	ext := path.Ext(inputPath)
-	outputPath := path.Join(outputDir, strings.TrimSuffix(path.Base(inputPath), ext) + ".mp4")
+	outputPath := path.Join(outputDir, strings.TrimSuffix(path.Base(inputPath), ext)+".mp4")
 	postUrl := fmt.Sprintf("%s/job", apiServerUrl)
 	postDataMap := map[string]string{
-		"InputFile": inputPath,
+		"InputFile":  inputPath,
 		"OutputFile": outputPath,
 	}
 

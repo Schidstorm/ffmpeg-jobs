@@ -1,7 +1,10 @@
 package config
 
+import "time"
+
 type Config struct {
-	InputFileDirectory string
+	InputFileDirectory  string
 	OutputFileDirectory string
-	ApiServerUrl string
+	ApiServerUrl        string
+	WatcherLoopWait     time.Duration
 }
