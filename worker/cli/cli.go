@@ -12,7 +12,7 @@ func Run() {
 		RunE: runApplication,
 	}
 
-	rootCmd.PersistentFlags().String("apiServer", "http://localhost:8080", "Url of the API server")
+	rootCmd.PersistentFlags().String("apiServer", "http://localhost:8081", "Url of the API server")
 	rootCmd.PersistentFlags().String("logLevel", logrus.WarnLevel.String(), "Log level (debug, info, warn, error, fatal, panic")
 
 	err := rootCmd.Execute()

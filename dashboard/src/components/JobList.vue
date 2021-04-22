@@ -41,11 +41,16 @@ export default {
       this.loading = true
       const url = `${this.$props.apiServer}/job`
       // replace `getPost` with your data fetching util / API wrapper
-      fetch(url)
-        .catch(err => this.error = err)
-        .then(response => response.json())
-        .then(data => this.$data.jobs = data.Data)
-        ;
+      this.loop(
+        () => fetch(url)
+          .catch(err => this.error = err)
+          .then(response => response.json())
+          .then(data => this.$data.jobs = data.Data),
+      5000)
+    },
+    loop(callback, timeout) {
+      callback()
+      window.setInterval(callback, timeout)
     }
   },
   components: {

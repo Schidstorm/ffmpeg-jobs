@@ -10,10 +10,17 @@ import (
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path"
 	"strings"
 	"time"
 )
+
+type inputFileState struct {
+	InputFilePath    string
+	OutputFilePath   string
+	OutputFileExists bool
+}
 
 func RunWatcher(config *config.Config, applicationContext context.Context) error {
 	for {
@@ -24,33 +31,43 @@ func RunWatcher(config *config.Config, applicationContext context.Context) error
 		}
 
 		apiJobs := getApiJobs(config.ApiServerUrl)
-		fsFiles := scanDirectory(config.InputFileDirectory)
+		fileStates := scanDirectory(config.InputFileDirectory, config.OutputFileDirectory)
 
-		for _, fsFile := range fsFiles {
-			if _, ok := apiJobs[fsFile]; ok {
+		for _, fileState := range fileStates {
+			if _, ok := apiJobs[fileState.InputFilePath]; ok {
 				continue
 			}
 
-			addJobForFile(config.ApiServerUrl, config.OutputFileDirectory, fsFile)
+			if !fileState.OutputFileExists {
+				addJobForFile(config.ApiServerUrl, config.OutputFileDirectory, fileState.InputFilePath)
+			}
 		}
 	}
 }
 
-func scanDirectory(dirPath string) []string {
+func scanDirectory(dirPath string, outputDir string) []inputFileState {
 	fileInfos, err := ioutil.ReadDir(dirPath)
 	if err != nil {
 		logrus.Error(err)
-		return []string{}
+		return []inputFileState{}
 	}
 
-	var filePaths []string
+	var fileStates []inputFileState
 	for _, fileInfo := range fileInfos {
 		if !fileInfo.IsDir() && !strings.HasPrefix(fileInfo.Name(), ".") {
-			filePaths = append(filePaths, path.Join(dirPath, fileInfo.Name()))
+			inputFilePath := path.Join(dirPath, fileInfo.Name())
+			outputFilePath := outputFileFromInputFilePath(outputDir, inputFilePath)
+			_, err := os.Stat(outputFilePath)
+			outputFileExists := err == nil
+			fileStates = append(fileStates, inputFileState{
+				InputFilePath:    inputFilePath,
+				OutputFilePath:   outputFilePath,
+				OutputFileExists: outputFileExists,
+			})
 		}
 	}
 
-	return filePaths
+	return fileStates
 }
 
 func getApiJobs(apiServerUrl string) map[string]domain.Job {
@@ -85,21 +102,25 @@ func getApiJobs(apiServerUrl string) map[string]domain.Job {
 }
 
 func addJobForFile(apiServerUrl, outputDir, inputPath string) {
-	ext := path.Ext(inputPath)
-	outputPath := path.Join(outputDir, strings.TrimSuffix(path.Base(inputPath), ext)+".mp4")
+	outputPath := outputFileFromInputFilePath(outputDir, inputPath)
 	postUrl := fmt.Sprintf("%s/job", apiServerUrl)
-	postDataMap := map[string]string{
+	postDataMap := map[string]interface{}{
 		"InputFile":  inputPath,
 		"OutputFile": outputPath,
 	}
 
 	postData, _ := json.Marshal(postDataMap)
 	resp, err := http.Post(postUrl, "application/json", bytes.NewBuffer(postData))
-	defer resp.Body.Close()
 
 	if err != nil {
 		logrus.Error(err)
 	} else {
+		defer resp.Body.Close()
 		logrus.Infof("added job for %s -> %s", inputPath, outputPath)
 	}
+}
+
+func outputFileFromInputFilePath(outputDir, inputFilePath string) string {
+	ext := path.Ext(inputFilePath)
+	return path.Join(outputDir, path.Base(strings.TrimSuffix(inputFilePath, ext)+".mp4"))
 }

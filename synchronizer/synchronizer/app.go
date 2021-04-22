@@ -6,5 +6,5 @@ import (
 )
 
 func Run(config *config.Config, ctx context.Context) error {
-	return nil
+	return RunWatcher(config, ctx)
 }

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/schidstorm/ffmpeg-jobs/worker/config"
 	"github.com/sirupsen/logrus"
@@ -36,7 +35,7 @@ func (l *Loop) Run(applicationContext context.Context) error {
 
 		resp, err := http.Post(claimUrl, "text/plain", bytes.NewBuffer([]byte("")))
 		if err == nil && resp.StatusCode != 200 {
-			logrus.Info(errors.New("no claims available"))
+			logrus.Info(fmt.Errorf("no claims available (Status code %d)", resp.StatusCode))
 			continue
 		}
 		if err != nil {
@@ -73,6 +72,8 @@ func (l *Loop) Run(applicationContext context.Context) error {
 			cancel()
 			if err == nil {
 				err = deleteJobInputFile(job)
+			} else {
+				failJob(l.config.ApiServerUrl, job, err)
 			}
 		}
 
@@ -82,9 +83,23 @@ func (l *Loop) Run(applicationContext context.Context) error {
 	}
 }
 
-func updateProgress(apiServerUrl string, job Job, progress float64)  {
+func updateProgress(apiServerUrl string, job Job, progress float64) {
 	putUrl := fmt.Sprintf("%s/job/%d", apiServerUrl, job.Data.ID)
 	data := fmt.Sprintf("{\"Progress\": %f}", progress)
+	req, err := http.NewRequest("PUT", putUrl, bytes.NewBuffer([]byte(data)))
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	_, err = http.DefaultClient.Do(req)
+	if err != nil {
+		logrus.Error(err)
+	}
+}
+
+func failJob(apiServerUrl string, job Job, err error) {
+	putUrl := fmt.Sprintf("%s/job/%d", apiServerUrl, job.Data.ID)
+	data := fmt.Sprintf("{\"Failed\": true, \"Claimed\": false, \"Error\": \"%s\"}", err.Error())
 	req, err := http.NewRequest("PUT", putUrl, bytes.NewBuffer([]byte(data)))
 	if err != nil {
 		logrus.Error(err)

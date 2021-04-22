@@ -5,6 +5,8 @@ import (
 	"github.com/schidstorm/ffmpeg-jobs/synchronizer/synchronizer"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"os"
+	"path"
 	"time"
 )
 
@@ -13,13 +15,21 @@ func Run() {
 		RunE: runApplication,
 	}
 
-	rootCmd.PersistentFlags().String("inputFileDirectory", "/input", "Directory where to look for optimizations")
-	rootCmd.PersistentFlags().String("outputFileDirectory", "/output", "Directory where to put the optimizations")
-	rootCmd.PersistentFlags().String("apiServer", "http://localhost:8080", "Url of the API server")
-	rootCmd.PersistentFlags().Duration("watcherLoopWait", 5*time.Second, "Time to wait between file syncs")
-	rootCmd.PersistentFlags().String("logLevel", logrus.WarnLevel.String(), "Log level (debug, info, warn, error, fatal, panic")
+	wd, err := os.Getwd()
+	if err != nil {
+		logrus.Warn(err)
+		wd = "."
+	}
+	inputDirPath := path.Join(wd, "test/input")
+	outputDirPath := path.Join(wd, "test/output")
 
-	err := rootCmd.Execute()
+	rootCmd.PersistentFlags().String("inputFileDirectory", inputDirPath, "Directory where to look for optimizations")
+	rootCmd.PersistentFlags().String("outputFileDirectory", outputDirPath, "Directory where to put the optimizations")
+	rootCmd.PersistentFlags().String("apiServer", "http://localhost:8081", "Url of the API server")
+	rootCmd.PersistentFlags().Duration("watcherLoopWait", 5*time.Second, "Time to wait between file syncs")
+	rootCmd.PersistentFlags().String("logLevel", logrus.InfoLevel.String(), "Log level (debug, info, warn, error, fatal, panic")
+
+	err = rootCmd.Execute()
 	if err != nil {
 		logrus.Error(err)
 	}
@@ -56,7 +66,7 @@ func parseConfig(cmd *cobra.Command) (*config.Config, error) {
 		return nil, err
 	}
 
-	apiServerUrl, err := cmd.PersistentFlags().GetString("apiServerUrl")
+	apiServer, err := cmd.PersistentFlags().GetString("apiServer")
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +78,7 @@ func parseConfig(cmd *cobra.Command) (*config.Config, error) {
 
 	return &config.Config{
 		InputFileDirectory:  inputFileDirectory,
-		ApiServerUrl:        apiServerUrl,
+		ApiServerUrl:        apiServer,
 		OutputFileDirectory: outputFileDirectory,
 		WatcherLoopWait:     watcherLoopWait,
 	}, nil

@@ -1,7 +1,10 @@
 <template>
   <v-list-item two-line>
       <v-list-item-content>
-        <v-list-item-title>{{ job.InputFile }}</v-list-item-title>
+        <v-list-item-title>{{ job.InputFile.replace("\\", "/").split('/').pop() }}</v-list-item-title>
+        <v-list-item-subtitle>
+          {{ new Date(job.Estimation).toISOString().substr(11, 8) }}
+        </v-list-item-subtitle>
         <v-progress-linear :value="job.Progress * 100"></v-progress-linear>
       </v-list-item-content>
       <v-list-item-action>
@@ -35,6 +38,11 @@ export default {
         // remove the element from the DOM
         this.$el.parentNode.removeChild(this.$el);
       })
+    }
+  },
+  watch: { 
+    job: function(newVal, oldVal) { // watch it
+      console.log('Prop changed: ', newVal.Progress, ' | was: ', oldVal.Progress)
     }
   }
   
