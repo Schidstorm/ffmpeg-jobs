@@ -46,8 +46,22 @@ func (j Job) ListHandler() lib.ListHandlerFunc {
 	return func(values url.Values) (interface{}, error) {
 		db := dependencies.Current.Database.DB()
 		var result []domain.Job
-		db.Find(&result)
+		db.Order("progress DESC").Find(&result)
 
 		return result, db.Error
+	}
+}
+
+func (j Job) DeleteHandler() lib.DeleteHandlerFunc {
+	return func(id int64, values url.Values) (interface{}, error) {
+		db := dependencies.Current.Database.DB()
+		job := &domain.Job{}
+		err := db.First(job, id).Error
+		if err != nil {
+			return job, err
+		}
+
+		err = db.Delete(job, id).Error
+		return job, err
 	}
 }

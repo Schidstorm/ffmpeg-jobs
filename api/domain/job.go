@@ -1,9 +1,13 @@
 package domain
 
-import "gorm.io/gorm"
+import (
+	"time"
+)
 
 type Job struct {
-	gorm.Model
+	ID        uint `gorm:"primarykey"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
 	Started    bool
 	Progress   float64
 	InputFile  string

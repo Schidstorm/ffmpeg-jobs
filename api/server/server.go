@@ -16,9 +16,11 @@ func NewServer() *Server {
 }
 
 func (s *Server) Serve(addr string) error {
-	server := &http.Server{Addr: addr, Handler: s.handler.Handler()}
+	server := &http.Server{Addr: addr, Handler: newMiddlewareHandler(s.handler.Handler())}
 	return server.ListenAndServe()
 }
+
+
 
 func (s *Server) AddController(controller lib.Controller) {
 	s.handler.AddController(controller)

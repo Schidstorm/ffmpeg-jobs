@@ -38,3 +38,8 @@ func (c Claim) PostHandler() (lib.PostHandlerFunc, interface{}) {
 func (c Claim) ListHandler() lib.ListHandlerFunc {
 	return nil
 }
+
+
+func (c Claim) DeleteHandler() lib.DeleteHandlerFunc {
+	return nil
+}

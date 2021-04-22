@@ -10,5 +10,5 @@ func main() {
 	dependencies.InitCollection()
 	srv := server.NewServer()
 	server.InitializeServer(srv)
-	logrus.Error(srv.Serve("0.0.0.0:8080"))
+	logrus.Error(srv.Serve("0.0.0.0:8081"))
 }

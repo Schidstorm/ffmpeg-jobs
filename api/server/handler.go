@@ -24,7 +24,6 @@ func (h *HttpHandler) Handler() http.Handler {
 }
 
 func (h *HttpHandler) AddController(controller lib.Controller) {
-
 	name := controller.Name()
 
 	listHandler := controller.ListHandler()
@@ -114,6 +113,26 @@ func (h *HttpHandler) AddController(controller lib.Controller) {
 			}
 
 			data, err := putHandler(id, request.URL.Query(), putDataStructure)
+			if err != nil {
+				handleError(writer, err)
+				return
+			}
+
+			handleSuccess(writer, data)
+		})
+	}
+
+	deleteHandler := controller.DeleteHandler()
+	if deleteHandler != nil {
+		h.globalRouter.DELETE("/"+name+"/:id", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+			idString := params.ByName("id")
+			id, err := strconv.ParseInt(idString, 10, 64)
+			if err != nil {
+				handleError(writer, err)
+				return
+			}
+
+			data, err := deleteHandler(id, request.URL.Query())
 			if err != nil {
 				handleError(writer, err)
 				return
