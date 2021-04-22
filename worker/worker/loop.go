@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -61,16 +62,7 @@ func (l *Loop) Run(applicationContext context.Context) error {
 
 		go func() {
 			jobDone <- RunFfmpegJob(job, func(p float64) {
-				putUrl := fmt.Sprintf("%s/job/%d", l.config.ApiServerUrl, job.Data.ID)
-				data := fmt.Sprintf("{\"Progress\": %f}", p)
-				req, err := http.NewRequest("PUT", putUrl, bytes.NewBuffer([]byte(data)))
-				if err != nil {
-					logrus.Error(err)
-				}
-				_, err = http.DefaultClient.Do(req)
-				if err != nil {
-					logrus.Error(err)
-				}
+				updateProgress(l.config.ApiServerUrl, job, p)
 			}, jobContext)
 		}()
 
@@ -79,10 +71,31 @@ func (l *Loop) Run(applicationContext context.Context) error {
 			cancel()
 		case err = <-jobDone:
 			cancel()
+			if err == nil {
+				err = deleteJobInputFile(job)
+			}
 		}
+
 		if err != nil {
 			logrus.Error(err)
 		}
 	}
+}
 
+func updateProgress(apiServerUrl string, job Job, progress float64)  {
+	putUrl := fmt.Sprintf("%s/job/%d", apiServerUrl, job.Data.ID)
+	data := fmt.Sprintf("{\"Progress\": %f}", progress)
+	req, err := http.NewRequest("PUT", putUrl, bytes.NewBuffer([]byte(data)))
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	_, err = http.DefaultClient.Do(req)
+	if err != nil {
+		logrus.Error(err)
+	}
+}
+
+func deleteJobInputFile(job Job) error {
+	return os.Remove(job.Data.InputFile)
 }
