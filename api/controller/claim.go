@@ -26,7 +26,7 @@ func (c Claim) PostHandler() (lib.PostHandlerFunc, interface{}) {
 	return func(values url.Values, _ interface{}) (interface{}, error) {
 		db := dependencies.Current.Database.DB()
 		var job domain.Job
-		err := db.First(&job, "started = ?", false).Update("started", true).Error
+		err := db.First(&job, "claimable = ? and claimed = ?", true, false).Update("claimed", true).Error
 		if err != nil {
 			return nil, err
 		}
