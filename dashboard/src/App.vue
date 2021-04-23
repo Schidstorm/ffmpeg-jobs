@@ -18,13 +18,14 @@
     </v-app-bar>
 
     <v-main>
-      <JobList apiServer="http://localhost:8081"/>
+      <JobList :apiServer="this.$data.config.apiServerUrl"/>
     </v-main>
   </v-app>
 </template>
 
 <script>
 import JobList from './components/JobList';
+import * as config from './config'
 
 export default {
   name: 'App',
@@ -33,9 +34,11 @@ export default {
     JobList,
   },
 
-  data: () => ({
-    //
-  }),
+  data: () => {
+    return {
+      config: config.current
+    }
+  },
 };
 </script>
 

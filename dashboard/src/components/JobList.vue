@@ -5,7 +5,7 @@
     tile
   >
     <v-card-title>
-      Jobs
+      Jobs 
     </v-card-title>
 
     <Job v-for="job in jobs" :key="job.ID" :apiServer="apiServer" :job="job">
@@ -46,7 +46,7 @@ export default {
           .catch(err => this.error = err)
           .then(response => response.json())
           .then(data => this.$data.jobs = data.Data),
-      5000)
+      20000)
     },
     loop(callback, timeout) {
       callback()

@@ -3,7 +3,7 @@
       <v-list-item-content>
         <v-list-item-title>{{ job.InputFile.replace("\\", "/").split('/').pop() }}</v-list-item-title>
         <v-list-item-subtitle>
-          {{ new Date(job.Estimation).toISOString().substr(11, 8) }}
+          {{ new Date(estimation).toISOString().substr(11, 8) }}
         </v-list-item-subtitle>
         <v-progress-linear :value="job.Progress * 100"></v-progress-linear>
       </v-list-item-content>
@@ -27,6 +27,9 @@ export default {
       Progress: Number
     }
   },
+  data: () => ({
+    estimation: 0
+  }),
   methods: {
     deleteJob() {
       fetch(`${this.$props.apiServer}/job/${this.$props.job.ID}`, {
@@ -41,8 +44,12 @@ export default {
     }
   },
   watch: { 
-    job: function(newVal, oldVal) { // watch it
-      console.log('Prop changed: ', newVal.Progress, ' | was: ', oldVal.Progress)
+    job: function(newVal) { // watch it
+      const lastChange = this.$data.lastChange || {time: Date.now(), progress: newVal.Progress}
+      const change = {time: Date.now(), progress: newVal.Progress}
+      const estimation = Math.floor((change.time - lastChange.time) / (change.progress - lastChange.progress))
+      this.$data.lastChange = change
+      this.$data.estimation = Number.isNaN(estimation) || !Number.isFinite(estimation) ? 0 : estimation
     }
   }
   
