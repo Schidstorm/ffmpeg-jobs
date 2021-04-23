@@ -71,7 +71,9 @@ func (l *Loop) Run(applicationContext context.Context) error {
 		case err = <-jobDone:
 			cancel()
 			if err == nil {
-				err = deleteJobInputFile(job)
+				if l.config.DeleteFinished {
+					err = deleteJobInputFile(job)
+				}
 			} else {
 				failJob(l.config.ApiServerUrl, job, err)
 			}

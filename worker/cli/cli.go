@@ -13,6 +13,7 @@ func Run() {
 	}
 
 	rootCmd.PersistentFlags().String("apiServer", "http://localhost:8081", "Url of the API server")
+	rootCmd.PersistentFlags().Bool("deleteFinished", false, "Delete input file of finished jobs")
 	rootCmd.PersistentFlags().String("logLevel", logrus.WarnLevel.String(), "Log level (debug, info, warn, error, fatal, panic")
 
 	err := rootCmd.Execute()
@@ -47,5 +48,10 @@ func parseConfig(cmd *cobra.Command) (*config.Config, error) {
 		return nil, err
 	}
 
-	return &config.Config{ApiServerUrl: apiServerString}, nil
+	deleteFinished, err := cmd.PersistentFlags().GetBool("deleteFinished")
+	if err != nil {
+		return nil, err
+	}
+
+	return &config.Config{ApiServerUrl: apiServerString, DeleteFinished: deleteFinished}, nil
 }
