@@ -13,35 +13,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2.1.0
 
+      - name: Login to DockerHub
+        uses: docker/login-action@v1 
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_SECRET }}
+
       - name: Build and push Docker images api
         uses: docker/build-push-action@v2
         with:
           context: "./api"
           push: true
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_SECRET }}
           tags: necromant/ffmpeg-jobs-api:latest
       - name: Build and push Docker images dashboard
         uses: docker/build-push-action@v2
         with:
           context: "./dashboard"
           push: true
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_SECRET }}
           tags: necromant/ffmpeg-jobs-dashboard:latest
       - name: Build and push Docker images synchronizer
         uses: docker/build-push-action@v2
         with:
           context: "./synchronizer"
           push: true
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_SECRET }}
           tags: necromant/ffmpeg-jobs-synchronizer:latest
       - name: Build and push Docker images worker
         uses: docker/build-push-action@v2
         with:
           context: "./worker"
           push: true
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_SECRET }}
           tags: necromant/ffmpeg-jobs-worker:latest
