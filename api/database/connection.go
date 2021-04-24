@@ -1,8 +1,10 @@
 package database
 
 import (
+	"errors"
 	"github.com/schidstorm/ffmpeg-jobs/api/domain"
 	"gorm.io/driver/sqlite"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -14,8 +16,19 @@ func NewConnection() *Connection {
 	return &Connection{}
 }
 
-func (c *Connection) Connect() error {
-	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+func (c *Connection) Connect(dialectorName, dsn string) error {
+	var dialector gorm.Dialector
+
+	switch dialectorName {
+	case "sqlite":
+		dialector = sqlite.Open(dsn)
+	case "postgres":
+		dialector = postgres.Open(dsn)
+	default:
+		return errors.New("dialectorName must be sqlite or postgres")
+	}
+
+	db, err := gorm.Open(dialector, &gorm.Config{})
 	if err != nil {
 		return err
 	}

@@ -11,9 +11,9 @@ type Collection struct {
 	Database *database.Connection
 }
 
-func InitCollection() {
+func InitConnection(dialectorName, dsn string) {
 	db := database.NewConnection()
-	err := db.Connect()
+	err := db.Connect(dialectorName, dsn)
 	if err != nil {
 		logrus.Error(err)
 	}
