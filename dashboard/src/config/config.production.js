@@ -1,3 +1,3 @@
 export default {
-  apiServerUrl: "https://ffmpeg.schidlow.ski"
+  apiServerUrl: "https://ffmpeg-api.schidlow.ski"
 }
