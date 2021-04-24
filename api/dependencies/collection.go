@@ -16,6 +16,7 @@ func InitConnection(dialectorName, dsn string) {
 	err := db.Connect(dialectorName, dsn)
 	if err != nil {
 		logrus.Error(err)
+		panic(err)
 	}
 	Current = &Collection{Database: db}
 }
