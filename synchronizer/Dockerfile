@@ -2,9 +2,10 @@ FROM golang as build
 
 COPY . /code
 WORKDIR /code
-RUN go build -o app -a .
+RUN GOOS=linux GOARCH=amd64 go build  -o app -a -ldflags '-w -extldflags "-static"' .
 
-FROM jrottenberg/ffmpeg
+FROM alpine
+RUN apk update && apk upgrade
 COPY --from=build /code/app /usr/local/bin/
 RUN chmod 333 /usr/local/bin/app
 
